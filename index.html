@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" href="data:,">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkinCare AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* VOICE: clínica y tranquila, como un informe de dermatoscopia; pocas tintas, mucho aire.
+   IDEA: la lente del dermatoscopio; cada imagen sale como una ficha de laboratorio.
+   PICTURE: la lente circular para soltar imágenes, y luego la imagen junto a su mapa Grad-CAM.
+   COLOUR and TYPE: azul tinta profundo, tono piel claro, coral solo para riesgo; IBM Plex Sans.
+   LAYOUT: banda azul con la lente; fichas de resultado una debajo de otra, en columna en el celular. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#ffffff,#0e1622);--ink:light-dark(#14202e,#e8edf3);--muted:light-dark(#5b6878,#9aa8b8);
+  --band:#10243e;--band-ink:#eef3f8;--skin:light-dark(#f6ece6,#1b2533);--line:light-dark(#e3e7ec,#26344a);
+  --card:light-dark(#ffffff,#131e2d);--risk:#d9483b;--risk-bg:light-dark(#fdecea,#3a1d1d);
+  --low:#2a6fb8;--low-bg:light-dark(#e9f1fa,#15263d);--lens:#e9c9b8}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.top{background:var(--band);color:var(--band-ink)}
+.top .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center;max-width:1240px;margin:0 auto}
+h1{font-size:clamp(34px,4.6vw,50px);line-height:1.05;margin:0 0 14px;font-weight:600;text-wrap:balance}
+.top p{margin:0 0 12px;max-width:60ch;color:#c4d0dd}
+.estado{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:14px;color:#c4d0dd}
+.barra{flex:1;max-width:280px;height:6px;border-radius:9px;background:#24405f;overflow:hidden}
+.barra i{display:block;height:100%;width:0;background:var(--lens);transition:width .2s}
+.lente{aspect-ratio:1;max-width:400px;width:100%;justify-self:center;border-radius:50%;position:relative;cursor:pointer;
+  background:radial-gradient(circle at 38% 34%,#f4dccd 0,#e2b9a3 38%,#c99179 70%,#a8735e 100%);
+  box-shadow:0 0 0 14px #1b3655,0 0 0 16px #2c4c70,0 30px 60px rgba(0,0,0,.45);display:grid;place-items:center;text-align:center;transition:transform .2s}
+.lente::before{content:"";position:absolute;inset:7%;border-radius:50%;border:1px dashed rgba(16,36,62,.45)}
+.lente::after{content:"";position:absolute;width:30%;height:26%;left:39%;top:37%;border-radius:47% 53% 44% 56%/52% 41% 59% 48%;
+  background:radial-gradient(circle at 45% 45%,#3b2418,#5e3a28 55%,rgba(94,58,40,.2) 80%,transparent);filter:blur(1px)}
+.lente.encima{transform:scale(1.03)}
+.lente .txt{position:relative;z-index:1;color:#10243e;margin-top:52%;font-weight:600;font-size:16px;line-height:1.3;padding:0 16%}
+.lente .txt small{display:block;font-weight:400;font-size:13px;margin-top:4px}
+.lente:focus-visible{outline:3px solid #fff;outline-offset:20px}
+.lente[aria-disabled=true]{cursor:progress;opacity:.8}
+main{max-width:1240px;margin:0 auto}
+.cabecera{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+h2{font-size:22px;margin:0;font-weight:600}
+.nota{color:var(--muted);font-size:14px;margin:0}
+button.sec{font:inherit;font-size:14px;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.sec:focus-visible{outline:3px solid var(--low);outline-offset:2px}
+.vacio{border:1px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);background:var(--skin)}
+.ficha{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr);gap:20px;align-items:start;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px;animation:entra .35s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){.ficha{animation:none}.lente{transition:none}}
+.ficha figure{margin:0}
+.ficha img{width:100%;aspect-ratio:1;border-radius:10px;display:block;background:var(--skin)}
+.ficha figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.nombre{font-weight:600;overflow-wrap:anywhere;margin:0 0 4px;font-size:17px}
+.decision{display:inline-block;padding:6px 12px;border-radius:999px;font-weight:600;font-size:14px;margin:6px 0 14px}
+.decision.r{background:var(--risk-bg);color:var(--risk)}.decision.b{background:var(--low-bg);color:var(--low)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:500;color:var(--muted);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+td{padding:10px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+td.dc{white-space:normal;text-align:right}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:14px;white-space:nowrap;padding-left:10px}
+.medidor{position:relative;height:8px;border-radius:9px;background:var(--skin);margin-top:6px;max-width:220px}
+.medidor i{position:absolute;inset:0 auto 0 0;border-radius:9px}
+.medidor b{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink)}
+.dec{font:500 13px "IBM Plex Sans",system-ui,sans-serif}.dec.r{color:var(--risk);font-weight:600}.dec.b{color:var(--low)}
+.pie{color:var(--muted);font-size:13px;margin-top:10px}
+.error{background:var(--risk-bg);color:var(--risk);padding:12px 16px;border-radius:10px;margin-bottom:16px}
+/* acceso */
+.acceso{min-height:100vh;background:var(--band);color:var(--band-ink);display:grid;place-items:center;padding:32px 16px}
+.acceso .caja{width:100%;max-width:420px}
+.acceso h1{text-align:center}.acceso .sub{text-align:center;color:#c4d0dd;margin:0 0 26px}
+.tarjeta{background:var(--card);color:var(--ink);border-radius:16px;padding:28px;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+.pestanas{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--skin);border-radius:10px;padding:4px;margin-bottom:20px}
+.pestanas button{font:inherit;font-size:15px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.pestanas button[aria-selected=true]{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tarjeta label{display:block;font-size:14px;font-weight:500;margin:14px 0 6px}
+.tarjeta input{width:100%;font:inherit;font-size:16px;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.tarjeta input:focus-visible,.pestanas button:focus-visible,.primario:focus-visible{outline:3px solid var(--low);outline-offset:2px}
+.primario{width:100%;margin-top:22px;font:inherit;font-weight:600;font-size:16px;min-height:48px;border:0;border-radius:10px;background:var(--band);color:#fff;cursor:pointer}
+:root[data-theme=dark] .primario{background:#2a6fb8}@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .primario{background:#2a6fb8}}
+.primario:disabled{opacity:.6;cursor:progress}
+.msg{font-size:14px;margin:14px 0 0;min-height:1.2em}.msg.mal{color:var(--risk)}
+.ayuda{font-size:13px;color:var(--muted);margin:16px 0 0}
+.usuario{display:flex;align-items:center;gap:10px;justify-content:flex-end;max-width:1240px;margin:0 auto 18px;font-size:14px;color:#c4d0dd}
+.usuario b{color:#fff;font-weight:600}
+.usuario button{font:inherit;font-size:14px;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #3a5878;background:transparent;color:#fff;cursor:pointer}
+body.sin-sesion .top,body.sin-sesion main{display:none}body:not(.sin-sesion) .acceso{display:none}
+@media(max-width:900px){.ficha{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ficha .datos{grid-column:1/-1}}
+@media(max-width:600px){.top .wrap{grid-template-columns:minmax(0,1fr)}.lente{max-width:300px}table{font-size:13px}
+.ficha thead{display:none}.ficha tr{display:block;padding:10px 0;border-bottom:1px solid var(--line)}.ficha td{display:flex;justify-content:space-between;gap:12px;border:0;padding:3px 0;text-align:right}.ficha td:first-child{display:block;font-weight:600}.ficha td[data-l]::before{content:attr(data-l);color:var(--muted);font:13px 'IBM Plex Sans',sans-serif}}
+</style>
+</head>
+<body class="sin-sesion">
+<section class="acceso" aria-labelledby="titulo-acceso">
+  <div class="caja">
+    <h1 id="titulo-acceso">SkinCare AI</h1>
+    <p class="sub">Apoyo al tamizaje temprano de lesiones cutáneas</p>
+    <div class="tarjeta">
+      <div class="pestanas" role="tablist">
+        <button type="button" role="tab" id="tab-entrar" aria-selected="true">Iniciar sesión</button>
+        <button type="button" role="tab" id="tab-crear" aria-selected="false">Crear cuenta</button>
+      </div>
+      <form id="form-acceso" novalidate>
+        <div id="campo-nombre" hidden><label for="nombre">Nombre</label><input id="nombre" autocomplete="name" maxlength="60"></div>
+        <label for="usuario">Usuario</label><input id="usuario" autocomplete="username" maxlength="40" autocapitalize="none" spellcheck="false" required>
+        <label for="clave">Contraseña</label><input id="clave" type="password" autocomplete="current-password" required>
+        <div id="campo-clave2" hidden><label for="clave2">Repite la contraseña</label><input id="clave2" type="password" autocomplete="new-password"></div>
+        <button class="primario" id="btn-acceso">Iniciar sesión</button>
+        <p class="msg" id="msg-acceso" role="alert"></p>
+      </form>
+      <p class="ayuda">Las cuentas se guardan en este navegador; la contraseña se almacena cifrada con PBKDF2-SHA256, nunca en texto plano.</p>
+    </div>
+  </div>
+</section>
+<header class="top band">
+  <div class="usuario"><span>Sesión de <b id="nombre-usuario"></b></span><button type="button" id="salir">Cerrar sesión</button></div>
+  <div class="wrap">
+    <div>
+      <h1>SkinCare AI</h1>
+      <p>Sube una o varias imágenes dermatoscópicas. Cada una se analiza con la ResNet50 entrenada en ISIC 2019 (CNN pura) y con la CNN + KNN, y se muestra el mapa Grad-CAM.</p>
+      <p>El modelo corre dentro de tu navegador: las imágenes no salen de tu equipo.</p>
+      <div class="estado" role="status"><div class="barra"><i id="progreso"></i></div><span id="estado">Cargando el modelo…</span></div>
+    </div>
+    <div class="lente" id="lente" tabindex="0" role="button" aria-disabled="true" aria-label="Elegir imágenes para analizar">
+      <div class="txt">Suelta aquí las imágenes<small>o haz clic · JPG o PNG</small></div>
+    </div>
+    <input type="file" id="archivos" accept="image/jpeg,image/png" multiple hidden>
+  </div>
+</header>
+<main class="band">
+  <div id="errores"></div>
+  <div class="cabecera">
+    <h2>Resultados</h2>
+    <button class="sec" id="limpiar" hidden>Borrar resultados</button>
+  </div>
+  <div id="lista"><div class="vacio" id="vacio">Aquí aparecerá cada imagen con su clasificación, la probabilidad de cada modelo y su Grad-CAM.</div></div>
+  <p class="pie">Herramienta de apoyo al tamizaje con fines académicos. No es un diagnóstico médico ni reemplaza a un dermatólogo. Umbrales ajustados en validación para priorizar el recall.</p>
+</main>
+<script src="ort.wasm.min.js"></script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MEDIA = [0.485, 0.456, 0.406], STD = [0.229, 0.224, 0.225], S = 224;
+let cfg, sesion, E, Y, normas, listo = false, hayKnn = false, cola = Promise.resolve();
+window.__resultados = [];
+
+function error(msg) { $('errores').innerHTML += `<div class="error">${esc(msg)}</div>`; }
+
+async function bajar(url, onBytes) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`No se pudo cargar ${url} (${r.status})`);
+  const lector = r.body.getReader(), trozos = [];
+  for (;;) { const { done, value } = await lector.read(); if (done) break; trozos.push(value); onBytes(value.length); }
+  const total = trozos.reduce((a, t) => a + t.length, 0), out = new Uint8Array(total);
+  let p = 0; for (const t of trozos) { out.set(t, p); p += t.length; }
+  return out;
+}
+async function gunzip(u8) {
+  if (u8[0] !== 0x1f || u8[1] !== 0x8b) return u8;          // ya viene descomprimido
+  const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+function deBase64(txt) {
+  if (Uint8Array.fromBase64) return Uint8Array.fromBase64(txt);
+  const bin = atob(txt), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+async function texto(url, onBytes) { return deBase64(new TextDecoder().decode(await bajar(url, onBytes))); }
+const MEDIO = (() => {            // float16 -> float32
+  const t = new Float32Array(65536);
+  for (let h = 0; h < 65536; h++) {
+    const s = h & 0x8000 ? -1 : 1, e = (h >> 10) & 31, f = h & 1023;
+    t[h] = e === 0 ? s * 2 ** -14 * (f / 1024) : e === 31 ? (f ? NaN : s * Infinity) : s * 2 ** (e - 15) * (1 + f / 1024);
+  }
+  return t; })();
+
+async function cargar() {
+  cfg = await (await fetch('config.json')).json();
+  let hechos = 0; const total = cfg.bytes_descarga;
+  const avance = n => { hechos += n; $('progreso').style.width = Math.min(100, 100 * hechos / total) + '%';
+    $('estado').textContent = `Cargando el modelo… ${Math.round(hechos / 1e6)} de ${Math.round(total / 1e6)} MB`; };
+  const [grafo, partes, eBytes, yBytes] = await Promise.all([
+    texto('grafo.txt', avance), Promise.all(cfg.partes_pesos.map(p => texto(p, avance))),
+    texto('knn_E.txt', avance), texto('knn_y.txt', () => {})]);
+  $('estado').textContent = 'Preparando el modelo…';
+  const h16 = new Uint8Array(partes.reduce((a, p) => a + p.length, 0));
+  let o = 0; for (const p of partes) { h16.set(p, o); o += p.length; }
+  const mitad = new Uint16Array(h16.buffer), pesos = new Float32Array(mitad.length);
+  for (let i = 0; i < mitad.length; i++) pesos[i] = MEDIO[mitad[i]];
+  ort.env.wasm.numThreads = 1;
+  ort.env.wasm.wasmPaths = new URL('./', location.href).href;
+  sesion = await ort.InferenceSession.create(grafo, { executionProviders: ['wasm'],
+    externalData: [{ path: 'pesos.bin', data: new Uint8Array(pesos.buffer) }] });
+  try {
+    E = new Int8Array((await gunzip(eBytes)).buffer); Y = yBytes;
+    normas = new Float32Array(cfg.n_ref);
+    for (let i = 0; i < cfg.n_ref; i++) { let s = 0; const b = i * cfg.dim; for (let j = 0; j < cfg.dim; j++) s += E[b + j] * E[b + j]; normas[i] = Math.sqrt(s); }
+    hayKnn = true;
+  } catch (e) { error('No se pudo cargar la referencia del KNN; solo se mostrará la CNN pura.'); }
+  listo = true; $('lente').setAttribute('aria-disabled', 'false');
+  $('progreso').style.width = '100%'; $('estado').textContent = 'Modelo listo. Sube tus imágenes.';
+}
+
+// Redimensionado bilineal igual al de PIL (Image.resize(..., Image.BILINEAR)), con antialias al reducir
+function coefs(entrada, salida) {
+  const escala = entrada / salida, fs = Math.max(escala, 1), soporte = fs, lista = [];
+  for (let x = 0; x < salida; x++) {
+    const centro = (x + 0.5) * escala;
+    const xmin = Math.max(Math.trunc(centro - soporte + 0.5), 0), xmax = Math.min(Math.trunc(centro + soporte + 0.5), entrada);
+    const w = []; let suma = 0;
+    for (let i = xmin; i < xmax; i++) { const t = Math.abs((i - centro + 0.5) / fs); const v = t < 1 ? 1 - t : 0; w.push(v); suma += v; }
+    lista.push({ xmin, w: w.map(v => suma ? v / suma : 0) });
+  }
+  return lista;
+}
+function redimensionar(px, w, h) {
+  const ch = coefs(w, S), cv = coefs(h, S), tmp = new Uint8ClampedArray(S * h * 3), out = new Uint8ClampedArray(S * S * 3);
+  for (let y = 0; y < h; y++) for (let x = 0; x < S; x++) {
+    const { xmin, w: k } = ch[x]; let r = 0, g = 0, b = 0;
+    for (let i = 0; i < k.length; i++) { const p = (y * w + xmin + i) * 4; r += px[p] * k[i]; g += px[p + 1] * k[i]; b += px[p + 2] * k[i]; }
+    const q = (y * S + x) * 3; tmp[q] = Math.round(r); tmp[q + 1] = Math.round(g); tmp[q + 2] = Math.round(b);
+  }
+  for (let y = 0; y < S; y++) { const { xmin, w: k } = cv[y];
+    for (let x = 0; x < S; x++) { let r = 0, g = 0, b = 0;
+      for (let i = 0; i < k.length; i++) { const p = ((xmin + i) * S + x) * 3; r += tmp[p] * k[i]; g += tmp[p + 1] * k[i]; b += tmp[p + 2] * k[i]; }
+      const q = (y * S + x) * 3; out[q] = Math.round(r); out[q + 1] = Math.round(g); out[q + 2] = Math.round(b); } }
+  return out;
+}
+async function pixeles(archivo) {
+  const bmp = await createImageBitmap(archivo);
+  const c = new OffscreenCanvas(bmp.width, bmp.height), ctx = c.getContext('2d');
+  ctx.drawImage(bmp, 0, 0);
+  return redimensionar(ctx.getImageData(0, 0, bmp.width, bmp.height).data, bmp.width, bmp.height);
+}
+
+const jet = (() => { const seg = (pts, v) => { for (let i = 1; i < pts.length; i++) if (v <= pts[i][0]) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; return y0 + (y1 - y0) * (v - x0) / (x1 - x0); } return pts.at(-1)[1]; };
+  const R = [[0,0],[.35,0],[.66,1],[.89,1],[1,.5]], G = [[0,0],[.125,0],[.375,1],[.64,1],[.91,0],[1,0]], B = [[0,.5],[.11,1],[.34,1],[.65,0],[1,0]];
+  return v => [seg(R, v), seg(G, v), seg(B, v)]; })();
+
+function camA224(cam7) {      // igual a F.interpolate(bilinear, align_corners=False) + normalización min-max
+  const out = new Float32Array(S * S), n = 7, esc = n / S;
+  const idx = d => { let s = esc * (d + 0.5) - 0.5; if (s < 0) s = 0; const i0 = Math.floor(s), i1 = Math.min(i0 + 1, n - 1); return [i0, i1, s - i0]; };
+  for (let y = 0; y < S; y++) { const [y0, y1, ly] = idx(y);
+    for (let x = 0; x < S; x++) { const [x0, x1, lx] = idx(x);
+      out[y * S + x] = (1 - ly) * ((1 - lx) * cam7[y0 * n + x0] + lx * cam7[y0 * n + x1]) + ly * ((1 - lx) * cam7[y1 * n + x0] + lx * cam7[y1 * n + x1]); } }
+  let mn = Infinity; for (const v of out) mn = Math.min(mn, v);
+  let mx = -Infinity; for (let i = 0; i < out.length; i++) { out[i] -= mn; mx = Math.max(mx, out[i]); }
+  for (let i = 0; i < out.length; i++) out[i] /= (mx + 1e-8);
+  return out;
+}
+function aURL(rgb, cam) {
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const ctx = c.getContext('2d'), img = ctx.createImageData(S, S);
+  for (let i = 0; i < S * S; i++) { const col = cam ? jet(cam[i]) : null;
+    for (let k = 0; k < 3; k++) img.data[i * 4 + k] = cam ? 0.55 * rgb[i * 3 + k] + 0.45 * 255 * col[k] : rgb[i * 3 + k];
+    img.data[i * 4 + 3] = 255; }
+  ctx.putImageData(img, 0, 0); return c.toDataURL('image/png');
+}
+
+function knnProb(emb) {        // KNeighborsClassifier(k, weights='distance', metric='cosine')
+  let nq = 0; for (const v of emb) nq += v * v; nq = Math.sqrt(nq) || 1;
+  const k = cfg.k, mejores = [];   // [distancia, índice], ordenada
+  for (let i = 0; i < cfg.n_ref; i++) {
+    let s = 0; const b = i * cfg.dim; for (let j = 0; j < cfg.dim; j++) s += emb[j] * E[b + j];
+    const d = 1 - s / (nq * (normas[i] || 1));
+    if (mejores.length < k || d < mejores[k - 1][0]) {
+      let p = Math.min(mejores.length, k - 1); mejores[p] = [d, i];
+      while (p > 0 && mejores[p - 1][0] > d) { [mejores[p - 1], mejores[p]] = [mejores[p], mejores[p - 1]]; p--; }
+      if (mejores.length > k) mejores.length = k;
+    }
+  }
+  const exactos = mejores.filter(m => m[0] <= 0);
+  const usar = exactos.length ? exactos.map(m => [1, m[1]]) : mejores.map(m => [1 / m[0], m[1]]);
+  let tot = 0, mal = 0; for (const [w, i] of usar) { tot += w; if (Y[i] === 1) mal += w; }
+  return mal / tot;
+}
+
+async function analizar(archivo) {
+  const rgb = await pixeles(archivo);
+  const x = new Float32Array(3 * S * S);
+  for (let i = 0; i < S * S; i++) for (let c = 0; c < 3; c++) x[c * S * S + i] = (rgb[i * 3 + c] / 255 - MEDIA[c]) / STD[c];
+  const t0 = performance.now();
+  const r = await sesion.run({ imagen: new ort.Tensor('float32', x, [1, 3, S, S]) });
+  const lg = r.logits.data, T = cfg.temperatura;
+  const a = lg[0] / T, b = lg[1] / T, m = Math.max(a, b);
+  const pCnn = Math.exp(b - m) / (Math.exp(a - m) + Math.exp(b - m));
+  const pKnn = hayKnn ? knnProb(r.embedding.data) : null;
+  const cam = camA224(r.cam.data);
+  return { rgb, cam, pCnn, pKnn, ms: performance.now() - t0 };
+}
+
+function ficha(nombre, res) {
+  const filas = [['CNN pura', res.pCnn], ['CNN + KNN', res.pKnn]].map(([m, p]) => {
+    const u = cfg.umbral[m];
+    if (p === null) return `<tr><td>${m}</td><td class="num" data-l="P(maligno)">—</td><td class="num" data-l="Umbral">${u.toFixed(3)}</td><td class="num dc" data-l="Decisión"><span class="dec">pendiente</span></td></tr>`;
+    const r = p >= u;
+    return `<tr><td>${m}<div class="medidor" aria-hidden="true"><i style="width:${(100 * p).toFixed(1)}%;background:${r ? 'var(--risk)' : 'var(--low)'}"></i><b style="left:${(100 * u).toFixed(1)}%"></b></div></td>
+      <td class="num" data-l="P(maligno)">${p.toFixed(3)}</td><td class="num" data-l="Umbral">${u.toFixed(3)}</td>
+      <td class="num dc" data-l="Decisión"><span class="dec ${r ? 'r' : 'b'}">${r ? 'POSIBLE RIESGO: consultar' : 'riesgo bajo según el modelo'}</span></td></tr>`; }).join('');
+  const sel = cfg.seleccionado, pSel = sel === 'CNN pura' ? res.pCnn : res.pKnn, riesgo = pSel >= cfg.umbral[sel];
+  const coinciden = res.pKnn === null ? null : (res.pCnn >= cfg.umbral['CNN pura']) === (res.pKnn >= cfg.umbral['CNN + KNN']);
+  const div = document.createElement('article'); div.className = 'ficha';
+  div.innerHTML = `<figure><img src="${aURL(res.rgb)}" alt="Imagen 224 por 224"><figcaption>Imagen (224 × 224)</figcaption></figure>
+    <figure><img src="${aURL(res.rgb, res.cam)}" alt="Mapa Grad-CAM"><figcaption>Grad-CAM (CNN) · rojo = más influencia</figcaption></figure>
+    <div class="datos"><p class="nombre">${esc(nombre)}</p>
+      <span class="decision ${riesgo ? 'r' : 'b'}">${riesgo ? 'Posible riesgo: consultar a un dermatólogo' : 'Riesgo bajo según el modelo'}</span>
+      <table><thead><tr><th>Modelo</th><th class="num">P(maligno)</th><th class="num">Umbral</th><th class="num">Decisión</th></tr></thead><tbody>${filas}</tbody></table>
+      <p class="pie">${coinciden === null ? 'CNN + KNN: se activa al cargar su referencia.' : coinciden ? 'Ambos modelos coinciden.' : 'Los modelos no coinciden: caso dudoso, conviene revisión profesional.'} Veredicto principal: ${esc(sel)} (elegido en validación). ${Math.round(res.ms)} ms.</p></div>`;
+  return div;
+}
+
+function procesar(archivos) {
+  if (!listo || !usuarioActual) return;
+  for (const f of archivos) cola = cola.then(async () => {
+    if (!/^image\/(jpeg|png)$/.test(f.type)) { error(`${f.name}: solo se aceptan JPG o PNG.`); return; }
+    $('estado').textContent = `Analizando ${f.name}…`;
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+    try {
+      const res = await analizar(f);
+      window.__resultados.push({ nombre: f.name, p_cnn: res.pCnn, p_knn: res.pKnn, cam: Array.from(res.cam.filter((_, i) => i % 997 === 0)) });
+      $('vacio')?.remove(); $('lista').prepend(ficha(f.name, res)); $('limpiar').hidden = false;
+    } catch (e) { error(`${f.name}: no se pudo analizar (${e.message}).`); }
+    $('estado').textContent = 'Modelo listo. Sube tus imágenes.';
+  });
+}
+
+const lente = $('lente'), input = $('archivos');
+lente.addEventListener('click', () => listo && input.click());
+lente.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && listo) { e.preventDefault(); input.click(); } });
+['dragenter', 'dragover'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); lente.classList.add('encima'); }));
+['dragleave', 'drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); lente.classList.remove('encima'); }));
+document.addEventListener('drop', e => procesar([...e.dataTransfer.files]));
+input.addEventListener('change', () => { procesar([...input.files]); input.value = ''; });
+$('limpiar').addEventListener('click', () => { $('lista').innerHTML = '<div class="vacio" id="vacio">Aquí aparecerá cada imagen con su clasificación, la probabilidad de cada modelo y su Grad-CAM.</div>'; $('limpiar').hidden = true; window.__resultados = []; });
+
+// ---------------- Autenticación básica (cuentas en este navegador) ----------------
+const almacen = (() => { try { const k = '__prueba'; localStorage.setItem(k, k); localStorage.removeItem(k); return localStorage; }
+  catch { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; } })();
+const sesionAlmacen = (() => { try { sessionStorage.setItem('__p', '1'); sessionStorage.removeItem('__p'); return sessionStorage; } catch { return almacen; } })();
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const deB64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+async function hashClave(clave, sal) {
+  const llave = await crypto.subtle.importKey('raw', new TextEncoder().encode(clave), 'PBKDF2', false, ['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: sal, iterations: 150000 }, llave, 256));
+}
+const leerCuentas = () => { try { return JSON.parse(almacen.getItem('skincare_cuentas') || '{}'); } catch { return {}; } };
+const guardarCuentas = c => almacen.setItem('skincare_cuentas', JSON.stringify(c));
+let modo = 'entrar', usuarioActual = null;
+
+function ponerModo(m) {
+  modo = m; const crear = m === 'crear';
+  $('tab-entrar').setAttribute('aria-selected', !crear); $('tab-crear').setAttribute('aria-selected', crear);
+  $('campo-nombre').hidden = !crear; $('campo-clave2').hidden = !crear;
+  $('clave').autocomplete = crear ? 'new-password' : 'current-password';
+  $('btn-acceso').textContent = crear ? 'Crear cuenta' : 'Iniciar sesión';
+  $('msg-acceso').textContent = ''; $('msg-acceso').className = 'msg';
+}
+function entrar(usuario, datos) {
+  usuarioActual = usuario; sesionAlmacen.setItem('skincare_sesion', usuario);
+  $('nombre-usuario').textContent = datos.nombre || usuario;
+  document.body.classList.remove('sin-sesion'); $('form-acceso').reset(); window.scrollTo(0, 0);
+}
+function salir() {
+  usuarioActual = null; sesionAlmacen.removeItem('skincare_sesion');
+  $('limpiar').click(); $('errores').innerHTML = '';
+  document.body.classList.add('sin-sesion'); ponerModo('entrar'); $('usuario').focus();
+}
+$('tab-entrar').addEventListener('click', () => ponerModo('entrar'));
+$('tab-crear').addEventListener('click', () => ponerModo('crear'));
+$('salir').addEventListener('click', salir);
+$('form-acceso').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('msg-acceso'), btn = $('btn-acceso'), aviso = t => { msg.textContent = t; msg.className = 'msg mal'; };
+  const usuario = $('usuario').value.trim().toLowerCase(), clave = $('clave').value;
+  if (!/^[a-z0-9._-]{3,40}$/.test(usuario)) return aviso('El usuario debe tener al menos 3 caracteres (letras, números, punto, guion).');
+  if (!window.crypto?.subtle) return aviso('Este navegador no permite cifrar la contraseña. Usa Chrome, Edge, Firefox o Safari actualizados.');
+  const cuentas = leerCuentas();
+  btn.disabled = true;
+  try {
+    if (modo === 'crear') {
+      const nombre = $('nombre').value.trim();
+      if (!nombre) return aviso('Escribe tu nombre.');
+      if (clave.length < 6) return aviso('La contraseña debe tener al menos 6 caracteres.');
+      if (clave !== $('clave2').value) return aviso('Las contraseñas no coinciden.');
+      if (cuentas[usuario]) return aviso('Ese usuario ya existe. Inicia sesión o elige otro.');
+      const sal = crypto.getRandomValues(new Uint8Array(16));
+      cuentas[usuario] = { nombre, sal: b64(sal), hash: await hashClave(clave, sal), creada: new Date().toISOString() };
+      guardarCuentas(cuentas); entrar(usuario, cuentas[usuario]);
+    } else {
+      const c = cuentas[usuario];
+      if (!c || await hashClave(clave, deB64(c.sal)) !== c.hash) return aviso('Usuario o contraseña incorrectos.');
+      entrar(usuario, c);
+    }
+  } catch (err) { aviso('No se pudo completar: ' + err.message); }
+  finally { btn.disabled = false; }
+});
+{ const u = sesionAlmacen.getItem('skincare_sesion'), c = u && leerCuentas()[u];
+  if (c) entrar(u, c); else $('usuario').focus(); }
+
+cargar().catch(e => { error('No se pudo cargar el modelo: ' + e.message); $('estado').textContent = 'Error al cargar el modelo.'; });
+}
+</script>
+</body>
+</html>

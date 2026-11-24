@@ -1,0 +1,19 @@
+{
+ "temperatura": 2.6297695636749268,
+ "umbral": {
+  "CNN pura": 0.4146670699119568,
+  "CNN + KNN": 0.19334689410161396
+ },
+ "k": 21,
+ "n_ref": 17214,
+ "dim": 2048,
+ "partes_pesos": [
+  "pesos_0.txt",
+  "pesos_1.txt",
+  "pesos_2.txt",
+  "pesos_3.txt"
+ ],
+ "n_pesos": 23486144,
+ "seleccionado": "CNN pura",
+ "bytes_descarga": 77172548
+}
