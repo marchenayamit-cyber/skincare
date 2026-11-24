@@ -68,6 +68,41 @@ td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:1
 .dec{font:500 13px "IBM Plex Sans",system-ui,sans-serif}.dec.r{color:var(--risk);font-weight:600}.dec.b{color:var(--low)}
 .pie{color:var(--muted);font-size:13px;margin-top:10px}
 .error{background:var(--risk-bg);color:var(--risk);padding:12px 16px;border-radius:10px;margin-bottom:16px}
+/* pestañas y dashboard */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:26px;overflow-x:auto}
+.tabs button{font:inherit;font-size:16px;min-height:48px;padding:0 18px;border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--band);font-weight:600}
+:root[data-theme=dark] .tabs button[aria-selected=true]{border-bottom-color:#7fb0e6}
+.tabs button:focus-visible,.seg button:focus-visible{outline:3px solid var(--low);outline-offset:-3px}
+.hallazgo{font-size:clamp(24px,3vw,32px);line-height:1.15;margin:0 0 8px;font-weight:600;text-wrap:balance;max-width:28ch}
+.sub2{color:var(--muted);margin:0 0 22px;max-width:75ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:26px}
+.kpi{padding:14px 16px 14px 0}.kpi+.kpi{padding-left:16px;border-left:1px solid var(--line)}
+.kpi .v{font-size:clamp(26px,3vw,34px);font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .e{font-size:13px;color:var(--muted)}.kpi .d{font-size:13px;margin-top:4px}
+.leyenda{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--muted);align-items:center}
+.leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.seg{display:inline-flex;background:var(--skin);border-radius:10px;padding:4px;gap:4px}
+.seg button{font:inherit;font-size:14px;min-height:40px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.bloque{margin:34px 0 0}.bloque h3{font-size:19px;margin:0 0 4px;font-weight:600}.bloque .sub2{margin-bottom:14px;font-size:15px}
+.dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.tabla td,.tabla th{padding:9px 10px 9px 0}.tabla td.num,.tabla th.num{padding-left:14px}
+.tabla .mejor{font-weight:600}
+.tabla th.num{font-family:"IBM Plex Sans",system-ui,sans-serif}.tabla td{white-space:nowrap}.tabla td:first-child{white-space:normal}
+.met{display:flex;align-items:center;gap:8px;justify-content:flex-end}.met .m{width:70px;height:6px;border-radius:9px;background:var(--skin);position:relative;overflow:hidden}.met .m i{position:absolute;inset:0 auto 0 0;border-radius:9px}
+.cm{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:4px;font-size:13px;align-items:stretch}
+.cm .c{border-radius:8px;padding:12px 8px;text-align:center;font-variant-numeric:tabular-nums}.cm .c b{display:block;font-size:22px}
+.cm .h{color:var(--muted);text-align:center;align-self:end;padding-bottom:4px}.cm .r{color:var(--muted);align-self:center;padding-right:6px;text-align:right}
+.fig{position:relative;min-height:320px}.fig>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.fig.baja{min-height:240px}
+.barras .fila{display:grid;grid-template-columns:150px minmax(0,1fr) 52px;gap:10px;align-items:center;font-size:14px;margin:6px 0}
+.barras .pista{height:10px;background:var(--skin);border-radius:9px;position:relative}.barras .pista i{position:absolute;inset:0 auto 0 0;border-radius:9px}
+.barras .val{text-align:right;font-variant-numeric:tabular-nums}
+.nota2{font-size:13px;color:var(--muted);margin-top:8px}
+.scroll{overflow-x:auto}
+@media(max-width:900px){.dos{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.kpis{grid-template-columns:1fr 1fr}.kpi,.kpi+.kpi{padding:12px 8px 12px 0;border-left:0}.kpi:nth-child(even){padding-left:12px;border-left:1px solid var(--line)}.kpi:nth-child(n+3){border-top:1px solid var(--line)}.met .m{display:none}.tabla td .nota2{display:none}.seg{display:flex;width:100%}.seg button{flex:1;font-size:13px;padding:0 8px}}
 /* acceso */
 .acceso{min-height:100vh;background:var(--band);color:var(--band-ink);display:grid;place-items:center;padding:32px 16px}
 .acceso .caja{width:100%;max-width:420px}
@@ -132,11 +167,18 @@ body.sin-sesion .top,body.sin-sesion main{display:none}body:not(.sin-sesion) .ac
 </header>
 <main class="band">
   <div id="errores"></div>
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button type="button" role="tab" id="t-analizar" aria-selected="true" aria-controls="vista-analizar">Analizar</button>
+    <button type="button" role="tab" id="t-dashboard" aria-selected="false" aria-controls="vista-dashboard">Dashboard del modelo</button>
+  </nav>
+  <section id="vista-dashboard" hidden></section>
+  <section id="vista-analizar">
   <div class="cabecera">
     <h2>Resultados</h2>
     <button class="sec" id="limpiar" hidden>Borrar resultados</button>
   </div>
   <div id="lista"><div class="vacio" id="vacio">Aquí aparecerá cada imagen con su clasificación, la probabilidad de cada modelo y su Grad-CAM.</div></div>
+  </section>
   <p class="pie">Herramienta de apoyo al tamizaje con fines académicos. No es un diagnóstico médico ni reemplaza a un dermatólogo. Umbrales ajustados en validación para priorizar el recall.</p>
 </main>
 <script src="ort.wasm.min.js"></script>
@@ -340,6 +382,135 @@ document.addEventListener('drop', e => procesar([...e.dataTransfer.files]));
 input.addEventListener('change', () => { procesar([...input.files]); input.value = ''; });
 $('limpiar').addEventListener('click', () => { $('lista').innerHTML = '<div class="vacio" id="vacio">Aquí aparecerá cada imagen con su clasificación, la probabilidad de cada modelo y su Grad-CAM.</div>'; $('limpiar').hidden = true; window.__resultados = []; });
 
+// ---------------- Pestañas ----------------
+function verVista(v) {
+  const dash = v === 'dashboard';
+  $('t-analizar').setAttribute('aria-selected', !dash); $('t-dashboard').setAttribute('aria-selected', dash);
+  $('vista-analizar').hidden = dash; $('vista-dashboard').hidden = !dash;
+  if (dash) pintarDashboard();
+  try { history.replaceState(null, '', dash ? '#dashboard' : location.pathname + location.search); } catch {}
+}
+$('t-analizar').addEventListener('click', () => verVista('analizar'));
+$('t-dashboard').addEventListener('click', () => verVista('dashboard'));
+addEventListener('hashchange', () => verVista(location.hash === '#dashboard' ? 'dashboard' : 'analizar'));
+
+// ---------------- Dashboard ----------------
+const COL = { 'CNN pura': '#2a78d6', 'CNN + KNN': '#eb6834' };
+const pct = (v, d = 1) => v == null || isNaN(v) ? '—' : (100 * v).toFixed(d) + ' %';
+const f3 = v => v == null || isNaN(v) ? '—' : v.toFixed(3);
+let MET = null, umbralVista = 'ajustado', observadores = [];
+fetch('metricas.json').then(r => r.json()).then(j => { MET = j; if (!$('vista-dashboard').hidden) pintarDashboard(); }).catch(() => {});
+
+function figura(id, dibujar) {
+  const caja = $(id); if (!caja) return;
+  const svg = caja.querySelector('svg');
+  const dib = () => { const W = svg.clientWidth, H = svg.clientHeight; if (W && H) svg.innerHTML = dibujar(W, H); };
+  const ro = new ResizeObserver(dib); ro.observe(svg); observadores.push(ro); dib();
+}
+function ejes(W, H, m, xt, yt, xl, yl) {
+  const X = v => m.l + v * (W - m.l - m.r), Yp = v => H - m.b - v * (H - m.t - m.b);
+  let g = '';
+  for (const t of [0, .2, .4, .6, .8, 1]) {
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Yp(t)}" y2="${Yp(t)}" stroke="currentColor" stroke-opacity=".1"/>`;
+    g += `<text x="${m.l - 8}" y="${Yp(t) + 4}" text-anchor="end" font-size="12" fill="currentColor" fill-opacity=".6">${yt(t)}</text>`;
+  }
+  g += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" text-anchor="middle" font-size="12" fill="currentColor" fill-opacity=".7">${xl}</text>`;
+  g += `<text transform="translate(12 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill="currentColor" fill-opacity=".7">${yl}</text>`;
+  return { X, Yp, g };
+}
+
+function pintarDashboard() {
+  const v = $('vista-dashboard');
+  if (!MET) { v.innerHTML = '<p class="vacio">Cargando métricas…</p>'; return; }
+  observadores.forEach(o => o.disconnect()); observadores = [];
+  const M = MET.modelos, mods = Object.keys(M), u = umbralVista;
+  const R = m => M[m].umbrales[u];
+  const sel = MET.seleccionado, rs = R(sel);
+  const metricas = [['Recall (sensibilidad)', 'Recall', 'Malignas detectadas. Métrica prioritaria.'],
+    ['Especificidad', 'Especificidad', 'Benignas bien descartadas. Meta ≥ 80 %.'],
+    ['Precisión', 'Precision', 'De las marcadas malignas, cuántas lo eran.'],
+    ['F1-score', 'F1', 'Balance entre precisión y recall.'],
+    ['Exactitud', 'Accuracy', 'Aciertos sobre el total.'],
+    ['AUC-ROC', 'AUC', 'Separación de clases a cualquier umbral.']];
+  const filasMet = metricas.map(([n, k, d]) => {
+    const vals = mods.map(m => R(m)[k]), mx = Math.max(...vals), distintos = new Set(vals.map(x => x.toFixed(4))).size > 1;
+    return `<tr><td>${n}<div class="nota2" style="margin:2px 0 0">${d}</div></td>${mods.map(m => {
+      const x = R(m)[k], meta = k === 'Especificidad' ? (x >= .8 ? ' ✓' : ' ✗') : '';
+      return `<td class="num ${distintos && x === mx ? 'mejor' : ''}"><div class="met">${pct(x)}${meta}<span class="m"><i style="width:${100 * x}%;background:${COL[m]}"></i></span></div></td>`; }).join('')}</tr>`; }).join('');
+  const cm = m => { const [[tn, fp], [fn, tp]] = R(m).matriz, tot = tn + fp + fn + tp, a = x => (0.12 + 0.6 * x / tot).toFixed(2);
+    return `<div><p class="nombre" style="font-size:15px">${m} <span class="nota2">· umbral ${f3(R(m).umbral)}</span></p><div class="cm">
+      <span></span><span class="h">Pred. benigna</span><span class="h">Pred. maligna</span>
+      <span class="r">Real benigna</span><div class="c" style="background:rgba(42,111,184,${a(tn)})"><b>${tn}</b>VN</div><div class="c" style="background:rgba(217,72,59,${a(fp)})"><b>${fp}</b>FP</div>
+      <span class="r">Real maligna</span><div class="c" style="background:rgba(217,72,59,${a(fn)})"><b>${fn}</b>FN</div><div class="c" style="background:rgba(42,111,184,${a(tp)})"><b>${tp}</b>VP</div>
+    </div></div>`; };
+  const fz = MET.fitzpatrick, grupos = [...new Set(fz.map(r => r.grupo))];
+  const filaFz = g => { const r = mods.map(m => fz.find(x => x.modelo === m && x.grupo === g)); const n = r[0];
+    return `<tr><td>${g}</td><td class="num">${n.n}</td><td class="num">${n.n_malignos}</td>${r.map(x => `<td class="num">${f3(x.AUC)}</td><td class="num">${pct(x.Recall, 0)}</td><td class="num">${pct(x.Especificidad, 0)}</td>`).join('')}</tr>`; };
+  const barrasFz = mods.map(m => ['I–III', 'IV–VI'].map(g => { const x = fz.find(r => r.modelo === m && r.grupo === g);
+    return `<div class="fila"><span>${m} · ${g}</span><span class="pista"><i style="width:${100 * x.AUC}%;background:${COL[m]};opacity:${g === 'IV–VI' ? .65 : 1}"></i></span><span class="val">${f3(x.AUC)}</span></div>`; }).join('')).join('');
+  const hist = window.__resultados || [], nR = hist.filter(h => h.p_cnn >= cfgUmbral('CNN pura')).length;
+  const acuerdo = hist.filter(h => h.p_knn != null).length ? hist.filter(h => h.p_knn != null && (h.p_cnn >= cfgUmbral('CNN pura')) === (h.p_knn >= cfgUmbral('CNN + KNN'))).length / hist.filter(h => h.p_knn != null).length : null;
+
+  v.innerHTML = `
+  <h2 class="hallazgo">La ${sel} detecta el ${pct(rs.Recall, 0)} de las lesiones malignas, con AUC de ${f3(rs.AUC)}</h2>
+  <p class="sub2">Conjunto de prueba de ISIC 2019: ${MET.n_prueba} imágenes (${MET.n_malignas_prueba} malignas) que el modelo nunca vio al entrenar. Partición 80/20 con semilla 42 y sin lesiones repetidas entre conjuntos.</p>
+  <div class="kpis">
+    ${mods.map(m => `<div class="kpi"><div class="e"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${COL[m]};margin-right:6px"></i>AUC · ${m}</div><div class="v">${f3(R(m).AUC)}</div><div class="d">Recall ${pct(R(m).Recall, 1)} · Espec. ${pct(R(m).Especificidad, 1)}</div></div>`).join('')}
+    <div class="kpi"><div class="e">Calibración (ECE)</div><div class="v">${f3(MET.ece_despues)}</div><div class="d">Antes ${f3(MET.ece_antes)} · T = ${f3(MET.temperatura)}</div></div>
+    <div class="kpi"><div class="e">Tiempo por imagen (GPU, en lote)</div><div class="v">${MET.ms_por_imagen['CNN pura'].toFixed(1)} ms</div><div class="d">CNN + KNN: ${MET.ms_por_imagen['CNN + KNN'].toFixed(1)} ms</div></div>
+  </div>
+  <div class="cabecera" style="margin-bottom:10px"><div class="leyenda">${mods.map(m => `<span><i style="background:${COL[m]}"></i>${m}</span>`).join('')}</div>
+    <div class="seg" role="group" aria-label="Umbral de decisión">
+      <button type="button" data-u="ajustado" aria-pressed="${u === 'ajustado'}">Umbral ajustado en validación</button>
+      <button type="button" data-u="0.5" aria-pressed="${u === '0.5'}">Umbral 0.5</button></div></div>
+  <div class="dos">
+    <div><h3 style="font-size:19px;margin:0 0 10px">Métricas en prueba</h3><div class="scroll"><table class="tabla"><thead><tr><th>Métrica</th>${mods.map(m => `<th class="num">${m}</th>`).join('')}</tr></thead><tbody>${filasMet}</tbody></table></div>
+      <p class="nota2">En negrita, el mejor de cada fila. ✓ / ✗: cumple o no la meta de especificidad ≥ 80 % en prueba. Modelo seleccionado en validación: <b>${sel}</b> (recall con especificidad ≥ 80 %: ${mods.map(m => `${m} ${pct(M[m].recall_espec80_val)}`).join(' · ')}).</p></div>
+    <div><h3 style="font-size:19px;margin:0 0 2px">Curva ROC</h3><p class="nota2" style="margin:0 0 6px">Cada punto marca el umbral elegido; la línea punteada es especificidad 80 %.</p><div class="fig" id="f-roc"><svg role="img" aria-label="Curva ROC de los dos modelos"></svg></div></div>
+  </div>
+  <section class="bloque"><h3>Matrices de confusión</h3><p class="sub2">Los falsos negativos (FN) son el error más costoso: lesiones malignas clasificadas como benignas.</p>
+    <div class="dos">${mods.map(cm).join('')}</div></section>
+  <section class="bloque"><h3>Desempeño por tono de piel (Fitzpatrick17k)</h3><p class="sub2">Prueba externa con fotos clínicas (no dermatoscopias), con los mismos umbrales. La caída mezcla el cambio de tipo de foto y el tono de piel; el AUC es la medida más confiable aquí.</p>
+    <div class="barras" style="max-width:640px"><p class="nota2" style="margin-top:0">AUC por grupo de tono de piel</p>${barrasFz}</div>
+    <div class="scroll" style="margin-top:18px"><table class="tabla"><thead><tr><th>Grupo</th><th class="num">n</th><th class="num">Malig.</th>${mods.map(m => `<th class="num">AUC ${m === 'CNN pura' ? 'CNN' : 'KNN'}</th><th class="num">Rec.</th><th class="num">Esp.</th>`).join('')}</tr></thead><tbody>${grupos.map(filaFz).join('')}</tbody></table></div></section>
+  <section class="bloque"><div class="dos">
+    <div><h3>Selección de k del KNN</h3><p class="sub2">Elegido en validación: k = ${MET.k}.</p><div class="fig baja" id="f-k"><svg role="img" aria-label="AUC y recall en validación según k"></svg></div>
+      <div class="leyenda" style="margin-top:8px"><span><i style="background:#2a78d6"></i>AUC validación</span><span><i style="background:#eb6834"></i>Recall con espec. ≥ 80 %</span></div></div>
+    <div><h3>Datos y uso</h3><p class="sub2">ISIC 2019, binario: maligno (MEL, BCC, SCC) vs. benigno (NV, BKL).</p>
+      <table class="tabla"><thead><tr><th>Conjunto</th><th class="num">Imágenes</th><th class="num">Malignas</th></tr></thead><tbody>${MET.particion.map(r => `<tr><td>${r.Conjunto}</td><td class="num">${r['Imágenes']}</td><td class="num">${r.Malignas} (${r['% malignas']} %)</td></tr>`).join('')}</tbody></table>
+      <p class="nota2">En esta sesión: <b>${hist.length}</b> imágenes analizadas, <b>${nR}</b> con posible riesgo según la ${'CNN pura'}${acuerdo == null ? '' : `, y los dos modelos coincidieron en el <b>${pct(acuerdo, 0)}</b>`}.</p></div>
+  </div></section>`;
+
+  v.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { umbralVista = b.dataset.u; pintarDashboard(); }));
+
+  figura('f-roc', (W, H) => {
+    const m = { l: 46, r: 12, t: 10, b: 38 }, { X, Yp, g } = ejes(W, H, m, null, t => t.toFixed(1), '1 − especificidad', 'Recall');
+    let s = g + `<line x1="${X(0)}" y1="${Yp(0)}" x2="${X(1)}" y2="${Yp(1)}" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="2 4"/>`;
+    s += `<line x1="${X(.2)}" x2="${X(.2)}" y1="${Yp(0)}" y2="${Yp(1)}" stroke="currentColor" stroke-opacity=".45" stroke-dasharray="5 4"/>`;
+    for (const t of [0, .2, .4, .6, .8, 1]) s += `<text x="${X(t)}" y="${H - m.b + 16}" text-anchor="middle" font-size="12" fill="currentColor" fill-opacity=".6">${t.toFixed(1)}</text>`;
+    for (const md of mods) {
+      const c = M[md].roc, r = R(md);
+      s += `<polyline fill="none" stroke="${COL[md]}" stroke-width="2" points="${c.fpr.map((x, i) => `${X(x).toFixed(1)},${Yp(c.tpr[i]).toFixed(1)}`).join(' ')}"><title>${md}: AUC ${f3(r.AUC)}</title></polyline>`;
+      s += `<circle cx="${X(1 - r.Especificidad)}" cy="${Yp(r.Recall)}" r="6" fill="${COL[md]}" stroke="var(--card)" stroke-width="2"><title>${md} · umbral ${f3(r.umbral)}: recall ${pct(r.Recall)}, especificidad ${pct(r.Especificidad)}</title></circle>`;
+    }
+    return s;
+  });
+  figura('f-k', (W, H) => {
+    const ks = MET.seleccion_k, lo = Math.floor(Math.min(...ks.flatMap(r => [r['AUC val'], r['Recall@Espec>=80% val']])) * 20) / 20, hi = Math.ceil(Math.max(...ks.flatMap(r => [r['AUC val'], r['Recall@Espec>=80% val']])) * 20) / 20;
+    const m = { l: 46, r: 12, t: 10, b: 38 }, n = v => (v - lo) / (hi - lo);
+    const { X, Yp, g } = ejes(W, H, m, null, t => (lo + t * (hi - lo)).toFixed(2), 'k (vecinos)', 'Validación');
+    const xi = i => X(i / (ks.length - 1));
+    let s = g; ks.forEach((r, i) => { s += `<text x="${xi(i)}" y="${H - m.b + 16}" text-anchor="middle" font-size="12" fill="currentColor" fill-opacity="${r.k === MET.k ? 1 : .6}" font-weight="${r.k === MET.k ? 600 : 400}">${r.k}</text>`; });
+    const iSel = ks.findIndex(r => r.k === MET.k); s += `<line x1="${xi(iSel)}" x2="${xi(iSel)}" y1="${Yp(0)}" y2="${Yp(1)}" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/>`;
+    for (const [key, c] of [['AUC val', '#2a78d6'], ['Recall@Espec>=80% val', '#eb6834']]) {
+      s += `<polyline fill="none" stroke="${c}" stroke-width="2" points="${ks.map((r, i) => `${xi(i)},${Yp(n(r[key]))}`).join(' ')}"/>`;
+      ks.forEach((r, i) => { s += `<circle cx="${xi(i)}" cy="${Yp(n(r[key]))}" r="4" fill="${c}" stroke="var(--card)" stroke-width="2"><title>k = ${r.k}: ${key === 'AUC val' ? 'AUC' : 'recall'} ${r[key].toFixed(3)}</title></circle>`; });
+    }
+    return s;
+  });
+}
+const cfgUmbral = m => (cfg && cfg.umbral[m]) ?? (MET && MET.umbral[m]) ?? 0.5;
+
 // ---------------- Autenticación básica (cuentas en este navegador) ----------------
 const almacen = (() => { try { const k = '__prueba'; localStorage.setItem(k, k); localStorage.removeItem(k); return localStorage; }
   catch { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; } })();
@@ -402,7 +573,8 @@ $('form-acceso').addEventListener('submit', async e => {
   finally { btn.disabled = false; }
 });
 { const u = sesionAlmacen.getItem('skincare_sesion'), c = u && leerCuentas()[u];
-  if (c) entrar(u, c); else $('usuario').focus(); }
+  if (c) entrar(u, c); else $('usuario').focus();
+  if (location.hash === '#dashboard') verVista('dashboard'); }
 
 cargar().catch(e => { error('No se pudo cargar el modelo: ' + e.message); $('estado').textContent = 'Error al cargar el modelo.'; });
 }

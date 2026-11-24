@@ -10,6 +10,8 @@ QUE HAY EN LA CARPETA (todos los archivos son necesarios)
 index.html                    La pagina: diseno y todo el codigo (inicio de sesion,
                               preprocesamiento, softmax con temperatura, KNN, Grad-CAM).
 config.json                   Temperatura T, umbrales (0.415 y 0.193), k = 21.
+metricas.json                 Metricas de prueba del Colab que muestra el Dashboard
+                              (recall, especificidad, AUC, matrices, ROC, Fitzpatrick, k).
 grafo.txt                     Estructura de la ResNet50 en formato ONNX (base64).
 pesos_0.txt ... pesos_3.txt   Pesos de tu modelo entrenado (float16, base64).
 knn_E.txt                     Embeddings de entrenamiento del KNN (17 214 x 2048).
