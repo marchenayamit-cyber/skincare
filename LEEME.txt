@@ -1,0 +1,46 @@
+SkinCare AI - pagina web
+========================
+
+Pagina que corre la ResNet50 (CNN pura) y la CNN + KNN directamente en el navegador.
+Subes una o varias imagenes y por cada una muestra: imagen 224x224, Grad-CAM,
+P(maligno) de cada modelo, umbral y decision. Las imagenes no salen del equipo.
+
+QUE HAY EN LA CARPETA (todos los archivos son necesarios)
+---------------------------------------------------------
+index.html                    La pagina: diseno y todo el codigo (inicio de sesion,
+                              preprocesamiento, softmax con temperatura, KNN, Grad-CAM).
+config.json                   Temperatura T, umbrales (0.415 y 0.193), k = 21.
+grafo.txt                     Estructura de la ResNet50 en formato ONNX (base64).
+pesos_0.txt ... pesos_3.txt   Pesos de tu modelo entrenado (float16, base64).
+knn_E.txt                     Embeddings de entrenamiento del KNN (17 214 x 2048).
+knn_y.txt                     Etiquetas de esas imagenes (0 = benigno, 1 = maligno).
+ort.wasm.min.js               ONNX Runtime Web 1.31.1: el motor que ejecuta el modelo
+ort-wasm-simd-threaded.mjs      en el navegador (Microsoft, licencia MIT).
+ort-wasm-simd-threaded.wasm
+
+INICIO DE SESION
+----------------
+- "Crear cuenta": nombre, usuario y contrasena (minimo 6 caracteres).
+- La contrasena se guarda como hash PBKDF2-SHA256 (150 000 iteraciones, sal aleatoria
+  de 16 bytes), nunca en texto plano. Las cuentas quedan en el navegador (localStorage).
+- La sesion dura mientras la pestana este abierta; "Cerrar sesion" la termina.
+- Limitacion: al no haber servidor, cada navegador tiene sus propias cuentas.
+
+IMPORTANTE
+----------
+index.html NO funciona con doble clic: el navegador bloquea que una pagina abierta
+desde el disco lea los otros archivos. Hay que servir la carpeta desde un servidor web.
+
+Probarla en tu computador:
+  1. Abre una terminal dentro de esta carpeta.
+  2. Ejecuta:  python -m http.server 8000
+  3. Abre en el navegador:  http://localhost:8000
+
+Publicarla gratis con tu propia direccion (GitHub Pages):
+  1. Crea una cuenta en github.com y un repositorio publico, por ejemplo "skincare".
+  2. "Add file" > "Upload files" y arrastra TODOS los archivos de esta carpeta. "Commit changes".
+  3. Settings > Pages > Source: "Deploy from a branch", rama "main", carpeta "/ (root)" > Save.
+  4. En 1-2 minutos queda en:  https://marchenayamit-cyber.github.io/skincare/
+
+La primera vez que se abre descarga unos 96 MB (modelo + KNN); luego el navegador
+los guarda. Herramienta de apoyo al tamizaje con fines academicos; no es un diagnostico.
